@@ -83,3 +83,7 @@ let rec subsets things =
 	| [] -> [[]]
 	| first::rest -> (prepend_all first (subsets rest)) @ (subsets rest)
 ;;
+
+(* b: subsets of some length *)
+let rec choose length nums =
+;;
