@@ -33,7 +33,7 @@ let found_a_three xs = List.fold xs ~init:false ~f:(fun found x -> found || x = 
 let fold_factorial n = List.fold(List.range 1 n + 1) ~init:1 ~f:(fun x y -> x * y);;
 
 (* recursively *)
-let rec rec_factorial n =
+let rec_factorial n =
 	let rec factorial' n product =
 	if n = 0
 	then product
@@ -50,6 +50,12 @@ let rec qsort nums =
 	match nums with
 	| [] -> []
 	| first::rest -> let low, high = List.partition_tf rest ~f:(fun n -> n < first) in qsort low @ [first] @ qsort high
+;;
+
+let rec rev_qsort nums =
+	match nums with
+	| [] -> []
+	| first::rest -> let low, high = List.partition_tf rest ~f:(fun n -> n < first) in rev_qsort high @ [first] @ rev_qsort low
 ;;
 
 (* b: Mergesort *)
@@ -85,5 +91,85 @@ let rec subsets things =
 ;;
 
 (* b: subsets of some length *)
-let rec choose length nums =
+(* this isn't polynomial time *)
+let choose length nums = List.filter (subsets nums) ~f:(fun subset -> (List.length subset = length));;
+
+(* this is in polynomial time *)
+let rec rec_choose length nums =
+	match length, nums with
+	| length, nums when (length > List.length nums) -> []
+	| 0, anything -> [[]]
+	| anything, first::rest -> (prepend_all first (rec_choose (length - 1) rest)) @ (rec_choose length rest)
+;;
+
+(* Problem 6 *)
+(* a: Write a function that... *)
+(* i: the same thing as List.tl *)
+let my_tl list =
+	match list with
+	| [] -> None
+	| first::rest -> Some rest
+;;
+
+(* ii: returns either the nth element of the list or None *)
+let rec my_nth list index =
+	match list, index with
+	| list, index when (index >= List.length list) -> None
+	| first::rest, 0 -> Some first
+	| first::rest, index -> my_nth rest (index - 1)
+;;
+
+(* iii: reverses a list *)
+let rec my_rev list =
+	match list with
+	| [] -> []
+	| first::rest -> my_rev rest @ [first]
+;;
+
+(* iv: does the same thing as List.find_map *)
+let rec my_find_map list ~f =
+	match list with
+	| [] -> None
+	| first::rest -> 
+		match f first with (* WHOA I CAN NEST MATCHES :O :O :O *)
+		| None -> my_find_map rest ~f 
+		| Some something -> Some something
+;;
+
+(* v: finds the max value in a list of integers *)
+let maxval int_list = List.hd (rev_qsort int_list);;
+
+(* vi: takes a list and element and 'intersperses' the element *)
+let rec intersperse element list =
+	match list with
+	| [] -> []
+	| [lonely] -> [lonely]
+	| first::rest -> first::element::(intersperse rest element)
+;;
+
+(* vii: does the same thing as List.group *)
+let my_group list ~break =
+	let rec group' lst current meta =
+		match lst with
+		| [] -> []
+		| [lonely] -> [[lonely]]
+		| first::second::rest ->
+			match (break first second), rest with
+			| false, [] -> meta @ [current @ [first; second]]
+			| true, [] -> meta @ [current @ [first]] @ [[second]]
+			| false, _ -> group' (second::rest) (current @ [first]) meta
+			| true, _ -> group' (second::rest) [] (meta @ [current @ [first]])
+	in group' list [] []
+;;
+
+(* viii: does the same thing as List.partition_tf *)
+let my_partition_tf list ~f =
+	let rec partition_tf' lst yes no =
+		match lst with
+		| [] -> (yes, no)
+		| first::rest ->
+			match (f first) with
+			| true -> partition_tf' rest (yes @ [first]) no
+			| false -> partition_tf' rest yes (no @ [first])
+	in partition_tf' list [] []
 ;;
